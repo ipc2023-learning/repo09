@@ -82,7 +82,11 @@ Stage: run
         if [ $? -eq 0 ] || [ -e "plan.1" ]; then
             break
         else
-            # Retry with half the batch size, probably crashed to due lack of memory.
+            if [ "${BATCH_SIZE}" -le 1 ]; then
+                break
+            fi
+
+            # Retry with half the batch size, probably crashed due to lack of memory
             BATCH_SIZE=$(( BATCH_SIZE / 2 ))
         fi
     done
