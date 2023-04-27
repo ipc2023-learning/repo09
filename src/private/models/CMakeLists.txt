@@ -1,0 +1,5 @@
+file(GLOB SRC_FILES "*.cpp")
+add_library(model STATIC ${SRC_FILES})
+target_link_libraries(model "${TORCH_LIBRARIES}")
+target_link_libraries(model formalism)
+add_subdirectory(modules)

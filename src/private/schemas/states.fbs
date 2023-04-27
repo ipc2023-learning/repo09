@@ -1,0 +1,58 @@
+namespace schemas;
+
+table Predicate {
+    id: uint;
+    arity: uint;
+    name: string (required);
+}
+
+table ActionSchema {
+    id: uint;
+    arity: uint;
+    name: string (required);
+}
+
+table Object {
+    id: uint;
+    name: string (required);
+}
+
+table Action {
+    schema_id: uint;
+    cost: int = -1;
+    arguments: [uint];
+}
+
+table Atom {
+    predicate_id: uint;
+    object_ids: [uint];
+}
+
+table Transition {
+    state_id: uint;
+    action: Action (required);
+}
+
+table State {
+    id: uint;
+    action_cost_from_initial: int = -1;
+    action_cost_to_goal: int = -1;
+    unit_cost_from_initial: int = -1;
+    unit_cost_to_goal: int = -1;
+    expanded: bool = false;
+    atoms: [Atom] (required);
+    successor_ids: [Transition];
+    predecessor_ids: [Transition];
+}
+
+table Problem {
+    predicates: [Predicate] (required);
+    action_schemas: [ActionSchema] (required);
+    objects: [Object] (required);
+    facts: [Atom] (required);
+    goal: [Atom] (required);
+    states: [State] (required);
+    initial_id: int = -1;
+}
+
+root_type Problem;

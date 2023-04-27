@@ -1,0 +1,110 @@
+# Stage 1: Compile the planner
+Bootstrap: docker
+From: nvidia/cuda:12.0.1-cudnn8-devel-ubuntu22.04
+Stage: build
+
+%files
+    src /planner/src
+    CMakeLists.txt /planner/CMakeLists.txt
+
+%post
+    ## Install all dependencies.
+    apt-get update
+    apt-get -y install --no-install-recommends unzip g++ libboost-dev cmake gcc-multilib g++-multilib wget
+
+    # Fetch LibTorch
+    cd /planner
+    wget https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcu118.zip
+
+    # Build planner
+    unzip libtorch*zip -d /usr/local
+    rm libtorch*zip
+    mkdir -p /planner/build
+    cd /planner/build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
+    cmake --build . -- -j 8
+
+    # Strip binaries
+    strip --strip-all /planner/build/src/ipc_train /planner/build/src/ipc_plan
+
+# Stage 2: Run the planner
+Bootstrap: docker
+From: nvidia/cuda:12.0.1-runtime-ubuntu22.04
+Stage: run
+
+%files from build
+    /planner/build/src/ipc_train /planner/ipc_train
+    /planner/build/src/ipc_plan /planner/ipc_plan
+    /usr/local/libtorch /usr/local/libtorch
+
+%post
+    apt-get update
+    apt-get -y install --no-install-recommends libboost-dev unzip
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+%runscript
+    if [ $# -ne 4 ]; then
+        echo "Error: Invalid number of arguments."
+        echo "Arguments: <knowledge_file> <domain_file> <problem_file> <output_file>"
+        exit 1
+    fi
+
+    # Create a temporary directory
+    TEMP_DIR=$(mktemp -d)
+
+    # Copy files to the temporary directory
+    cp "$1" "${TEMP_DIR}/knowledge.zip"
+    cp "$2" "${TEMP_DIR}/domain.pddl"
+    cp "$3" "${TEMP_DIR}/problem.pddl"
+
+    # Unzip the knowledge file in the temporary directory
+    unzip "${TEMP_DIR}/knowledge.zip" -d "${TEMP_DIR}"
+
+    # Read the 'use_wl' flag
+    USE_WL=$(cat "${TEMP_DIR}/use_wl")
+
+    # Step into the base directory of the output file
+    cd "$(dirname "$4")"
+
+    # Initialize BATCH_SIZE
+    BATCH_SIZE=256
+
+    while true; do
+        # Run the planner
+        if [ "$USE_WL" -eq "1" ]; then
+            /planner/ipc_plan --model "${TEMP_DIR}/suboptimal_best" --domain "${TEMP_DIR}/domain.pddl" --problem "${TEMP_DIR}/problem.pddl" --batch_size "${BATCH_SIZE}" --wl
+        else
+            /planner/ipc_plan --model "${TEMP_DIR}/suboptimal_best" --domain "${TEMP_DIR}/domain.pddl" --problem "${TEMP_DIR}/problem.pddl" --batch_size "${BATCH_SIZE}"
+        fi
+
+        # Check the exit code and existence of 'plan.1'
+        if [ $? -eq 0 ] || [ -e "plan.1" ]; then
+            break
+        else
+            # Retry with half the batch size, probably crashed to due lack of memory.
+            BATCH_SIZE=$(( BATCH_SIZE / 2 ))
+        fi
+    done
+
+    if [ "$4" != "plan.1" ]; then cp "plan.1" "$4"; fi
+
+    # Remove the temporary folder
+    rm -rf "${TEMP_DIR}"
+
+
+%labels
+Name         Muninn
+Description  Learn Relational MPNNs for STRIPS
+Authors      Simon Ståhlberg <simon.stahlberg@liu.se>, Blai Bonet <bonetblai@gmail.com>, Hector Geffner <hector.geffner@ml.rwth-aachen.de>
+License      GNU GPLv3
+Environments multi-core
+SupportsDerivedPredicates                    no
+SupportsUniversallyQuantifiedPreconditions   no
+SupportsExistentiallyQuantifiedPreconditions no
+SupportsUniversallyQuantifiedEffects         no
+SupportsNegativePreconditions                yes
+SupportsEqualityPreconditions                no
+SupportsInequalityPreconditions              no
+SupportsConditionalEffects                   no
+SupportsImplyPreconditions                   no

@@ -1,0 +1,12 @@
+file(GLOB SRC_FILES "*.cpp")
+add_library(experiments STATIC ${SRC_FILES})
+target_link_libraries(experiments "${TORCH_LIBRARIES}")
+target_link_libraries(experiments algorithms)
+target_link_libraries(experiments dataset)
+target_link_libraries(experiments model)
+target_link_libraries(experiments planners)
+
+add_subdirectory(returns)
+add_subdirectory(rewards)
+add_subdirectory(validations)
+add_subdirectory(values)
