@@ -10,10 +10,10 @@ Execute the following command to build and copy the executables `plan` and `trai
 
 Refer to the `containers/cuda_cudnn/Dockerfile` for guidance on installing CUDA and CuDNN on your local machine.
 
-We provide two containers that adhere to the IPC 2023 Learning Track interface. The first container, Muninn, learns from the provided instances:
+We provide two containers that adhere to the IPC 2023 Learning Track interface. The first container learns from the provided instances:
 
-`sudo apptainer build muninn.sif containers/Apptainer.muninn.learn`
+`sudo apptainer build muninn.sif Apptainer.muninn.learn`
 
-The second container, Huginn, generates a plan using the learned knowledge collected by Muninn:
+The second container generates a plan using the learned knowledge collected by Muninn:
 
-`sudo apptainer build huginn.sif containers/Apptainer.huginn.plan`
+`sudo apptainer build huginn.sif Apptainer.muninnn.plan`
