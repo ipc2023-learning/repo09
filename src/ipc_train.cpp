@@ -298,8 +298,8 @@ int main(int argc, char* argv[])
 
     if (state_spaces.size() == 0)
     {
-        std::cout << "Unable to expand ANY state space." << std::endl;
-        std::cout << "Aborting." << std::endl;
+        std::cerr << "Unable to expand ANY state space. Need at least one instance that can be fully expanded, but preferably five or more." << std::endl;
+        std::cerr << "Aborting." << std::endl;
         return 1;
     }
 
