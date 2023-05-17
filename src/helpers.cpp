@@ -180,16 +180,7 @@ formalism::ProblemDescriptionList load_problems(const fs::path& path)
         }
         else
         {
-            planners::H2Heuristic h2(problem);
-
-            if (h2.get_cost(problem->initial) == planners::HeuristicBase::DEAD_END)
-            {
-                std::cout << "Problem \"" << problem->name << "\": The goal is unachievable (h2), skipping" << std::endl;
-            }
-            else
-            {
-                problems.push_back(problem);
-            }
+            problems.push_back(problem);
         }
     }
     std::cout << std::endl;
