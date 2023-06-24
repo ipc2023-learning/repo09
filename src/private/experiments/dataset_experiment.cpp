@@ -95,7 +95,13 @@ namespace experiments
                     const auto time_now = std::chrono::high_resolution_clock::now();
                     const auto time_ms = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start).count());
                     const auto training_loss = loss.item<double>();
-                    training_callback_({ .epoch = epoch, .batch_index = batch_index, .num_batches = num_train_batches, .time_ms = time_ms }, training_loss);
+
+                    TrainingStep training_step;
+                    training_step.epoch = epoch;
+                    training_step.batch_index = batch_index;
+                    training_step.num_batches = num_train_batches;
+                    training_step.time_ms = time_ms;
+                    training_callback_(training_step, training_loss);
                 }
             }
 
@@ -116,14 +122,22 @@ namespace experiments
                 const auto time_now = std::chrono::high_resolution_clock::now();
                 const auto time_ms = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start).count());
                 const auto validation_loss = total_validation_loss / (double) validation_set.size();
-                validation_callback_({ .epoch = epoch, .time_ms = time_ms }, validation_loss);
+
+                ValidationStep validation_step;
+                validation_step.epoch = epoch;
+                validation_step.time_ms = time_ms;
+                validation_callback_(validation_step, validation_loss);
             }
 
             if (epoch_callback_)
             {
                 const auto time_now = std::chrono::high_resolution_clock::now();
                 const auto time_ms = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start).count());
-                const auto abort = epoch_callback_({ .epoch = epoch, .time_ms = time_ms });
+
+                EpochStep epoch_step;
+                epoch_step.epoch = epoch;
+                epoch_step.time_ms = time_ms;
+                const auto abort = epoch_callback_(epoch_step);
 
                 if (abort)
                 {
