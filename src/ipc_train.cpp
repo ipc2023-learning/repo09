@@ -37,7 +37,6 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
-#include <unistd.h>
 #include <vector>
 
 // Older versions of LibC++ does not have filesystem (e.g., ubuntu 18.04), use the experimental version
@@ -193,9 +192,13 @@ void train_with_supervised_optimal(const commandline_parser& args,
     { std::cout << "[" << step.epoch << ", " << step.batch_index + 1 << "/" << step.num_batches << "] Train: " << loss << std::endl; };
 
     double best_loss = std::numeric_limits<double>::max();
-    const auto validation_step = [&best_loss, &model, &reduce_lr_on_plateau](const experiments::ValidationStep& step, double loss) -> void
+    const auto validation_step = [&time_start, &best_loss, &model, &reduce_lr_on_plateau](const experiments::ValidationStep& step, double loss) -> void
     {
-        std::cout << "[" << step.epoch << "] Validation: " << loss << std::endl;
+        const auto total_seconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - time_start).count();
+        const auto minutes = total_seconds / 60;
+        const auto seconds = total_seconds - 60 * minutes;
+
+        std::cout << "[" << step.epoch << "] Validation: " << loss << " (" << minutes << "m " << seconds << "s)" << std::endl;
 
         if (loss < best_loss)
         {

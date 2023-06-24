@@ -10,15 +10,29 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
-  # Set up MSVC compiler
-  list(APPEND CMAKE_PREFIX_PATH "D:/Libs/libtorch")
-  file(GLOB TORCH_DLLS "D:/Libs/libtorch/lib/*.dll")
+  if(NOT CMAKE_BUILD_TYPE)
+      set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+  endif()
+
+  message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+  
+  if(CMAKE_BUILD_TYPE MATCHES "Release")
+  list(APPEND CMAKE_PREFIX_PATH "D:/Libs/libtorch_release")
+  file(GLOB TORCH_DLLS "D:/Libs/libtorch_release/lib/*.dll")
+  endif()
+
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  list(APPEND CMAKE_PREFIX_PATH "D:/Libs/libtorch_debug")
+  file(GLOB TORCH_DLLS "D:/Libs/libtorch_debug/lib/*.dll")
+  endif()
+
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1 /EHsc /bigobj /MP")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
   set(CUDNN_INCLUDE_PATH "C:/Program Files/NVIDIA/CUDNN/v8.3/include")
   set(CUDNN_LIBRARY_PATH "C:/Program Files/NVIDIA/CUDNN/v8.3/lib/x64/cudnn.lib")
   set(BOOST_ROOT "C:/Libs/boost_1_81_0")
   include_directories("C:/Libs/boost_1_81_0")
+  string(APPEND CMAKE_EXE_LINKER_FLAGS " /IGNORE:4006,4044,4075")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
   # Enable relative position to LibTorch and the most common locations of CUDA
   set(CMAKE_SKIP_BUILD_RPATH FALSE)

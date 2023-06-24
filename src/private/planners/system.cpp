@@ -21,10 +21,7 @@
 #include <cstddef>
 #include <iostream>
 
-#if defined(_WIN32) || defined(_WIN64)
-#include <psapi.h>
-#include <windows.h>
-#elif defined(__linux__)
+#if defined(__linux__)
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -38,13 +35,7 @@ namespace resources
     {
         std::size_t memory_usage = 0;
 
-#if defined(_WIN32) || defined(_WIN64)
-        PROCESS_MEMORY_COUNTERS_EX pmc;
-        if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*) &pmc, sizeof(pmc)))
-        {
-            memory_usage = pmc.PrivateUsage;
-        }
-#elif defined(__linux__)
+#if defined(__linux__)
         long rss = 0;
         FILE* fp = fopen("/proc/self/statm", "r");
         if (fp != nullptr)

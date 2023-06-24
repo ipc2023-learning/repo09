@@ -19,6 +19,7 @@
 #include "help_functions.hpp"
 #include "problem.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 

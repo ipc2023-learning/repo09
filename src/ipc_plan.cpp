@@ -44,7 +44,6 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
-#include <unistd.h>
 
 // Older versions of LibC++ does not have filesystem (e.g., ubuntu 18.04), use the experimental version
 #if __has_include(<filesystem>)
@@ -327,11 +326,12 @@ int main(int argc, char* argv[])
             planners::SearchStatistics statistics;
 
             std::vector<formalism::Action> subplan;
-            const planners::BatchedAstarSettings settings = { .batch_delta = batch_delta,
-                                                              .min_improvement = min_improvement,
-                                                              .batch_size = batch_size,
-                                                              .min_expanded = min_expanded,
-                                                              .max_expanded = std::numeric_limits<uint32_t>::max() };
+            planners::BatchedAstarSettings settings;
+            settings.batch_delta = batch_delta;
+            settings.min_improvement = min_improvement;
+            settings.batch_size = batch_size;
+            settings.min_expanded = min_expanded;
+            settings.max_expanded = std::numeric_limits<uint32_t>::max();
 
             torch::NoGradGuard no_grad;
             found_plan = planners::batched_astar_search(settings,

@@ -22,6 +22,7 @@
 #include "state_space.hpp"
 #include "system.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <deque>
 

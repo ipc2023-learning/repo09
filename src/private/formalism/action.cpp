@@ -19,6 +19,7 @@
 #include "action.hpp"
 #include "help_functions.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 

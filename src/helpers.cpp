@@ -189,7 +189,7 @@ formalism::ProblemDescriptionList load_problems(const fs::path& path)
               problems.end(),
               [](const formalism::ProblemDescription& lhs, const formalism::ProblemDescription& rhs) { return lhs->num_objects() < rhs->num_objects(); });
 
-    std::cout << "Parsed " << problems.size() << "problems" << std::endl;
+    std::cout << "Parsed " << problems.size() << " problems" << std::endl;
 
     return problems;
 }
