@@ -181,7 +181,7 @@ void write_plan(const std::string& filename, const std::vector<formalism::Action
         file << "(";
         file << action->schema->name;
 
-        for (const auto& argument : action->arguments)
+        for (const auto& argument : action->get_arguments())
         {
             file << " ";
             file << argument;
