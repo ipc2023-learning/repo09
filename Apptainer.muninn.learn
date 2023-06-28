@@ -62,7 +62,7 @@ Stage: run
     done
 
     cd "${OUTPUT_DIRECTORY}"
-    timeout 84600 /planner/ipc_train --input "${INPUT_DIRECTORY}" --time_optimal 660 --time_suboptimal 690 --max_state_space_size 25000000 --expand_memory 24576 --features 32
+    timeout 84600 /planner/ipc_train --input "${INPUT_DIRECTORY}" --time_optimal 660 --time_suboptimal 690 --max_state_space_size 25000000 --expand_memory 24576 --features 48
     zip "${OUTPUT_FILE}".1 optimal_best.hparams optimal_best.pnn suboptimal_best.hparams suboptimal_best.pnn use_wl
 
     rm -rf "${INPUT_DIRECTORY}"
