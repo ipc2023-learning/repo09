@@ -53,8 +53,9 @@ Stage: run
     echo "Domain: ${DOMAIN_FILE}"
     echo "Problems: ${PROBLEM_FILES}"
 
+    mkdir -p tmp
     OUTPUT_DIRECTORY="$(dirname ${OUTPUT_FILE})"
-    INPUT_DIRECTORY="$(mktemp -d)"
+    INPUT_DIRECTORY="$(pwd)/tmp"
 
     cp "${DOMAIN_FILE}" "${INPUT_DIRECTORY}"
     for FILE in ${PROBLEM_FILES}; do

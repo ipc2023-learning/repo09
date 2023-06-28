@@ -51,7 +51,8 @@ Stage: run
     fi
 
     # Create a temporary directory
-    TEMP_DIR=$(mktemp -d)
+    mkdir -p tmp
+    TEMP_DIR="$(pwd)/tmp"
 
     # Copy files to the temporary directory
     cp "$1" "${TEMP_DIR}/knowledge.zip"
@@ -91,7 +92,7 @@ Stage: run
         fi
     done
 
-    if [ "$4" != "plan.1" ]; then cp "plan.1" "$4"; fi
+    if [ "$4" != "plan.1" ] && [ -f "plan.1" ]; then cp "plan.1" "$4"; fi
 
     # Remove the temporary folder
     rm -rf "${TEMP_DIR}"
