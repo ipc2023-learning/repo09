@@ -187,7 +187,8 @@ formalism::ProblemDescriptionList load_problems(const fs::path& path)
 
     std::sort(problems.begin(),
               problems.end(),
-              [](const formalism::ProblemDescription& lhs, const formalism::ProblemDescription& rhs) { return lhs->num_objects() < rhs->num_objects(); });
+              [](const formalism::ProblemDescription& lhs, const formalism::ProblemDescription& rhs) {
+                return lhs->num_objects() < rhs->num_objects(); });
 
     std::cout << "Parsed " << problems.size() << " problems" << std::endl;
 
@@ -203,21 +204,25 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
                                               int32_t max_memory_mb)
 {
     // Generate training data.
+    // We assume that if problem P_i is too large to expand, then all P_j, i < j, are also too large to expand.
+    // This is to avoid high memory peak usages.
 
     planners::StateSpaceList small_state_spaces;
     formalism::ProblemDescriptionList large_problems;
     pruning_is_safe = true;
     pruning_is_useful = false;
 
-    for (const auto& problem : problems)
+    for (std::size_t problem_index = 0; problem_index < problems.size(); ++problem_index)
     {
+        const auto& problem = problems[problem_index];
         planners::StateSpace state_space = nullptr;
+        int64_t time_expand_ms;
 
         {
             const auto time_start = std::chrono::high_resolution_clock::now();
             state_space = planners::create_state_space(problem, max_size, false, timeout_s, max_memory_mb);
             const auto time_stop = std::chrono::high_resolution_clock::now();
-            const auto time_elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_stop - time_start).count();
+            time_expand_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_stop - time_start).count();
             const auto num_objects = problem->objects.size();
 
             if (state_space)
@@ -226,7 +231,7 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
                 const auto distance_from_initial = unsolvable ? -1 : state_space->get_distance_to_goal_state(problem->initial);
 
                 std::cout << "Problem \"" << problem->name << "\" was fully expanded (" << state_space->num_states() << " states, "
-                          << state_space->num_transitions() << " transitions, " << num_objects << " objects, " << time_elapsed_ms << " ms, "
+                          << state_space->num_transitions() << " transitions, " << num_objects << " objects, " << time_expand_ms << " ms, "
                           << (unsolvable ? "unsolvable" : (std::to_string(distance_from_initial) + " steps to solve")) << ")";
 
                 if ((distance_from_initial == 0) || unsolvable)
@@ -237,13 +242,24 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
             else
             {
                 large_problems.push_back(problem);
-                std::cout << "Problem \"" << problem->name << "\" has too many states, " << num_objects << " objects (" << time_elapsed_ms << " ms)";
+                std::cout << "Problem \"" << problem->name << "\" has too many states, " << num_objects << " objects (" << time_expand_ms << " ms)";
+                std::cout << ", adding remaining problems as large problems..." << std::endl;
+
+                for (std::size_t index = problem_index + 1; index < problems.size(); ++index)
+                {
+                    large_problems.push_back(problems[index]);
+                }
+
+                break;
             }
         }
 
         if (state_space && use_weisfeiler_leman && pruning_is_safe)
         {
+            const auto time_start = std::chrono::high_resolution_clock::now();
             const auto pruned_state_space = planners::prune_state_space_with_weisfeiler_leman(state_space);
+            const auto time_stop = std::chrono::high_resolution_clock::now();
+            const auto time_prune_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_stop - time_start).count();
 
             if (pruned_state_space)
             {
@@ -254,6 +270,13 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
                 if (state_space->num_states() != pruned_state_space->num_states())
                 {
                     pruning_is_useful = true;
+                }
+
+                if ((time_prune_ms > 100) && (time_prune_ms > time_expand_ms))
+                {
+                    std::cout << ", pruning is too expensive";
+                    use_weisfeiler_leman = false;
+                    pruning_is_useful = false;
                 }
 
                 state_space = pruned_state_space;
@@ -300,6 +323,8 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
             else
             {
                 std::cout << "Problem \"" << problem->name << "\" has too many states with 1-WL (" << time_elapsed_ms << " ms)" << std::endl;
+                std::cout << "Skip remaining large problems..." << std::endl;
+                break;
             }
         }
     }

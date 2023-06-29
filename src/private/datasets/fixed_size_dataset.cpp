@@ -53,9 +53,13 @@ namespace datasets
         const auto& state_space = state_spaces_[state_space_index];
         const auto& label_groups = states_grouped_by_label_[state_space_index];
 
+
         std::uniform_int_distribution<std::size_t> label_groups_uniform(0, label_groups.size() - 1);
         const auto group_label = label_groups_uniform(generator_);
-        const auto& group = label_groups.at(group_label);
+
+        const auto dead_end_label = std::numeric_limits<uint32_t>::max();
+        const auto selected_dead_end_group = (group_label == (label_groups.size() - 1)) && label_groups.count(dead_end_label);
+        const auto& group = selected_dead_end_group ? label_groups.at(dead_end_label) : label_groups.at(group_label);
 
         std::uniform_int_distribution<std::size_t> group_uniform(0, group.size() - 1);
         const auto state_index = group_uniform(generator_);
