@@ -315,6 +315,12 @@ int main(int argc, char* argv[])
 
         while (!found_plan)
         {
+            if (std::chrono::high_resolution_clock::now() > time_end)
+            {
+                std::cout << "Ran out of time. Aborting." << std::endl;
+                break;
+            }
+
             const auto search_start = std::chrono::high_resolution_clock::now();
             ++num_searches;
 
@@ -348,12 +354,6 @@ int main(int argc, char* argv[])
 
             const auto search_end = std::chrono::high_resolution_clock::now();
             const auto search_elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(search_end - search_start).count();
-
-            if (std::chrono::high_resolution_clock::now() > time_end)
-            {
-                std::cout << "Ran out of time. Aborting." << std::endl;
-                break;
-            }
 
             if (!found_plan)
             {
