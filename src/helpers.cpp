@@ -203,14 +203,17 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
                                               int32_t max_memory_mb)
 {
     // Generate training data.
+    // We assume that if problem P_i is too large to expand, then all P_j, i < j, are also too large to expand.
+    // This is to avoid high memory peak usages.
 
     planners::StateSpaceList small_state_spaces;
     formalism::ProblemDescriptionList large_problems;
     pruning_is_safe = true;
     pruning_is_useful = false;
 
-    for (const auto& problem : problems)
+    for (std::size_t problem_index = 0; problem_index < problems.size(); ++problem_index)
     {
+        const auto& problem = problems[problem_index];
         planners::StateSpace state_space = nullptr;
 
         {
@@ -238,6 +241,14 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
             {
                 large_problems.push_back(problem);
                 std::cout << "Problem \"" << problem->name << "\" has too many states, " << num_objects << " objects (" << time_elapsed_ms << " ms)";
+                std::cout << "Adding remaining problems as large problems..." << std::endl;
+
+                for (std::size_t index = problem_index + 1; index < problems.size(); ++index)
+                {
+                    large_problems.push_back(problems[index]);
+                }
+
+                break;
             }
         }
 
@@ -300,6 +311,8 @@ planners::StateSpaceList compute_state_spaces(const formalism::ProblemDescriptio
             else
             {
                 std::cout << "Problem \"" << problem->name << "\" has too many states with 1-WL (" << time_elapsed_ms << " ms)" << std::endl;
+                std::cout << "Skip remaining large problems..." << std::endl;
+                break;
             }
         }
     }
